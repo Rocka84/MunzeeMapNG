@@ -4,11 +4,12 @@
 // @include     https://www.munzee.com/map*
 // @include     https://www.munzee.com/specials
 // @version     1.0.0
+// @author		Rocka84
 // @grant       unsafeWindow
-// @description Munzee map filters, scores and gpx exports
+// @description Munzee map filters, scores and gpx exports,
 // ==/UserScript==
 // 
-// Forked from MunzeeMapV2 2.3.1
+// Forked from MunzeeMapV2 2.3.1 (https://greasyfork.org/en/scripts/11662-munzeemapv2)
 // 
 // Features:
 // * filter Types on Map (show/hide (*), show only)
