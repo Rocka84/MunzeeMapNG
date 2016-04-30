@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name        MunzeeMapNG
-// @namespace   MunzeeMapNG
-// @include     https://www.munzee.com/map*
-// @include     https://www.munzee.com/specials
-// @version     1.0.0
-// @author		Rocka84
-// @grant       unsafeWindow
-// @description Munzee map filters, scores and gpx exports,
+// @name         MunzeeMapNG
+// @namespace    MunzeeMapNG
+// @include      https://www.munzee.com/map*
+// @include      https://www.munzee.com/specials
+// @version      1.0.1
+// @author       Rocka84
+// @updateURL    https://openuserjs.org/meta/Rocka84/FlagstackMap.meta.js
+// @description  Munzee map filters, scores and gpx exports,
 // ==/UserScript==
 // 
 // Forked from MunzeeMapV2 2.3.1 (https://greasyfork.org/en/scripts/11662-munzeemapv2)
@@ -100,12 +100,29 @@ try {
 				geoList,
 				showScoreList = true,
 				locale = 'de-DE',
-				tmpl_gpx = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?><gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:rmc="urn:net:trekbuddy:1.0:nmea:rmc" creator="MunzeeMapNG" xmlns:wptx1="http://www.garmin.com/xmlschemas/WaypointExtension/v1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd http://www.garmin.com/xmlschemas/WaypointExtension/v1 http://www.garmin.com/xmlschemas/WaypointExtensionv1.xsd" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:ql="http://www.qlandkarte.org/xmlschemas/v1.1"><metadata><time><%time></time></metadata><%wpts><extensions/></gpx>',
-				tmpl_wpt = '<wpt lon="<%lon>" lat="<%lat>"><time><%time></time><name><%name></name><cmt><%cmt></cmt><desc><![CDATA[<%desc>]]></desc><extensions><locus:icon>file:munzee.zip:<%icon>.png</locus:icon></extensions></wpt>',
+				tmpl_gpx = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
+						+'<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:rmc="urn:net:trekbuddy:1.0:nmea:rmc" creator="MunzeeMapNG" xmlns:wptx1="http://www.garmin.com/xmlschemas/WaypointExtension/v1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd http://www.garmin.com/xmlschemas/WaypointExtension/v1 http://www.garmin.com/xmlschemas/WaypointExtensionv1.xsd" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:ql="http://www.qlandkarte.org/xmlschemas/v1.1">'
+							+'<metadata>'
+								+'<time><%time></time>'
+							+'</metadata>'
+							+'<%wpts>'
+							+'<extensions/>'
+						+'</gpx>',
+				tmpl_wpt = '<wpt lon="<%lon>" lat="<%lat>">'
+							+'<time><%time></time>'
+							+'<name><![CDATA[<%name>]]></name>'
+							+'<cmt><![CDATA[<%cmt>]]></cmt>'
+							+'<desc><![CDATA[<%desc>]]></desc>'
+							+'<extensions>'
+								+'<locus:icon>file:munzee.zip:<%icon>.png</locus:icon>'
+							+'</extensions>'
+						+'</wpt>',
 				notes_cache = {},
 				filterIcons = $('<div id="filterIcons"></div>'),
 				scoreIcons,
 				inputbar = $('#inputbar'),
+				spinner,
+				spinner_label,
 				img_header = "data:image/png;base64,",
 				images = {
 					first: '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',
@@ -168,8 +185,6 @@ try {
 						return 'hotel' + caps;
 					if (namepart === 'virtual_resort' && caps < 15)
 						return 'virtual_resort' + caps;
-					//				if (namepart === 'quiznormal' || namepart === 'quizvirtual')
-					//					return 'quiz';
 					if (namepart === 'aquarius' || namepart === 'pisces' || namepart === 'aries' || namepart === 'taurus' || namepart === 'gemini' || namepart === 'cancer' || namepart === 'leo' || namepart === 'virgo' || namepart === 'libra' || namepart === 'scorpio' || namepart === 'sagittarius' || namepart === 'capricorn')
 						return 'zodiac';
 					return namepart;
@@ -291,28 +306,32 @@ try {
 			}
 
 			function createGPX() {
+				showSpinner();
 				createGPXasync(function (wpts) {
 					if (wpts) {
+						hideSpinner();
 						window.open('data:text/plain,' + useTmpl(tmpl_gpx, {
 							time: (new Date()).toISOString(),
-							wpts: wpts
+							wpts: wpts.join('')
 						}));
 					}
 				});
 			}
 
 			function createGPXasync(callback) {
-				var wpts = "", pending = [], pi;
+				var wpts = [], pending = [], pi;
 				for (var i = 0; i < markers.length; i++) {
 					if (markers[i].getMap() !== null && the_map.getBounds().contains(markers[i].getPosition()) && $.inArray(markers[i].icon.url, filters) === -1) {
 						pending.push(i);
+						spinner_label.html('Please wait<br />'+pending.length+' pending....');
 						createWaypoint(i, function (index, wpt) {
-							wpts += wpt;
+							wpts.push(wpt);
 							pi = pending.indexOf(index);
-							if (pi > -1)
+							if (pi > -1){
 								pending.splice(pi, 1);
+								spinner_label.html('Please wait<br />'+pending.length+' pending...');
+							}
 							if (pending.length === 0) {
-								//							console.log(pending,wpts);
 								callback(wpts);
 							}
 						});
@@ -348,7 +367,6 @@ try {
 
 			function getNotes(index, callback) {
 				var url;
-				console.log(markers[index].infoWindow);
 				if (markers[index].infoWindow && markers[index].infoWindow.content.match(/<\/a> at<br\/><a href="([^"]*)"/)) {
 					url = RegExp.$1.replace("http:","https:");
 				} else {
@@ -385,6 +403,89 @@ try {
 					req.send();
 				}
 			}
+			
+			function showSpinner(){
+				if (!spinner){
+					spinner=$(
+							'<div id="mmng_spinner">'
+								+'<div class="spinner">'
+									+'<div class="bounce1"></div>'
+									+'<div class="bounce2"></div>'
+									+'<div class="bounce3"></div>'
+								+'</div>'
+							+'</div>'
+					).appendTo(document.body);
+					spinner_label = $('<div class="spinner_label">Please wait</div>').appendTo(spinner);
+					
+					// Thx to http://tobiasahlin.com/spinkit/
+					$('head').append($(
+						"<style>"
+						+ "#mmng_spinner{"
+							+ "position:absolute;"
+							+ "top:0;"
+							+ "left:0;"
+							+ "width:100%;"
+							+ "height:100%;"
+							+ "background-color:rgba(55,55,55,0.8);"
+							+ "z-index:999"
+						+ "}"
+						+ ".spinner{"
+							+ "margin:100px auto 0;"
+							+ "width:70px;"
+							+ "height:23px;"
+							+ "text-align:center;"
+							+ "position: absolute;"
+							+ "top:50%;"
+							+ "left:50%;"
+							+ "margin:-11px 0 0 -35px;"
+						+ "}"
+						+ ".spinner > div{"
+							+ "width:18px;"
+							+ "height:18px;"
+							+ "background-color:white;"
+							+ "border-radius:100%;"
+							+ "display:inline-block;"
+							+ "-webkit-animation:sk-bouncedelay 1.4s infinite ease-in-out both;"
+							+ "animation:sk-bouncedelay 1.4s infinite ease-in-out both;"
+						+ "}"
+						+ ".spinner .bounce1{"
+							+ "-webkit-animation-delay:-0.32s;"
+							+ "animation-delay:-0.32s;"
+						+ "}"
+						+ ".spinner .bounce2{"
+							+ "-webkit-animation-delay:-0.16s;"
+							+ "animation-delay:-0.16s;"
+						+ "}"
+						+ ".spinner_label{"
+							+ "color:white;"
+							+ "width:100%;"
+							+ "text-align:center;"
+							+ "font-size:larger;"
+							+ "font-weight:bold;"
+							+ "position:absolute;"
+							+ "top:50%;"
+							+ "margin-top:20px;"
+						+ "}"
+						+ "@-webkit-keyframes sk-bouncedelay{"
+							+ "0%,80%,100%{-webkit-transform:scale(0);}"
+							+ "40%{-webkit-transform:scale(1.0);}"
+						+ "}"
+						+ "@keyframes sk-bouncedelay{"
+							+ "0%,80%,100%{-webkit-transform:scale(0);transform:scale(0);}"
+							+ "40%{-webkit-transform:scale(1.0);transform:scale(1.0);}"
+						+ "}"
+						+ "</style>"
+					));
+				}
+				spinner.show();
+			}
+			
+			function hideSpinner(){
+				if (spinner){
+					spinner.hide();
+				}
+			}
+			
 
 
 			$("#footer").remove();
@@ -501,10 +602,10 @@ try {
 
 			unsafeWindow.createGPX = createGPX;
 			unsafeWindow.getNotes = getNotes;
-
-
+			unsafeWindow.showSpinner = showSpinner;
+			unsafeWindow.hideSpinner = hideSpinner;
 		}
-
+			
 		if (typeof allmarkers !== 'undefined') {
 			MunzeeMapNG(the_map, allmarkers);
 		} else {
